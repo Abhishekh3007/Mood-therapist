@@ -89,13 +89,11 @@ export default function DashboardPage() {
       if (!user) return;
 
       try {
-        console.log('Fetching chat logs for user:', user.id);
         const startDate = new Date();
         startDate.setDate(startDate.getDate() - dateRange);
-        console.log('Date range:', dateRange, 'Start date:', startDate.toISOString());
 
         const { data, error } = await supabase
-          .from('ChatLog')
+          .from('chatlog')
           .select('*')
           .eq('user_id', user.id)
           .gte('created_at', startDate.toISOString())
@@ -106,7 +104,6 @@ export default function DashboardPage() {
           return;
         }
 
-        console.log('Fetched chat logs:', data?.length || 0, 'records');
         setChatLogs(data || []);
         setChatSessions(data || []);
       } catch (error) {

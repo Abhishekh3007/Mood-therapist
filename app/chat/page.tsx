@@ -41,8 +41,25 @@ export default function ChatPage() {
   const [loading, setLoading] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [showWelcome, setShowWelcome] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+
+  // Check authentication on component mount
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error || !session) {
+        router.push('/login');
+        return;
+      }
+      setIsAuthenticated(true);
+      setAuthLoading(false);
+    };
+    
+    checkAuth();
+  }, [router]);
 
   // Welcome message effect
   useEffect(() => {
@@ -72,6 +89,15 @@ export default function ChatPage() {
   // Handle sending a message
   const handleSend = async () => {
     if (!input.trim()) return;
+    
+    // Get the current session
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError || !session) {
+      console.error('No valid session found:', sessionError);
+      router.push('/login');
+      return;
+    }
+    
     const userMsg = { 
       role: "user" as const, 
       content: input,
@@ -84,9 +110,17 @@ export default function ChatPage() {
     try {
       const res = await fetch('/api/chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
         body: JSON.stringify({ message: input, chatHistory: messages }),
       });
+      
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+      
       const data = await res.json();
       const botMsg: ChatMessage = { 
         role: 'bot' as const, 
@@ -95,7 +129,8 @@ export default function ChatPage() {
       };
       if (data.external) botMsg.external = data.external;
       setMessages((prev) => [...prev, botMsg]);
-    } catch {
+    } catch (error) {
+      console.error('Chat API error:', error);
       setMessages((prev) => [...prev, { 
         role: 'bot', 
         content: 'Sorry, something went wrong. Please try again.',
@@ -237,10 +272,21 @@ export default function ChatPage() {
     setInput(message);
   };
 
-  // Format timestamp
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
+
+  // Show loading while checking authentication
+  if (authLoading || !isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading chat...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">

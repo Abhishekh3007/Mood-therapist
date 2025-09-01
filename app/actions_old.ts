@@ -2,6 +2,20 @@ import Sentiment from 'sentiment';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { supabase } from '../lib/supabaseClient';
 
+type ChatHistory = Array<Recor    // Still persist the chat even with fallback
+    try {
+      await supabase.from('ChatLog').insert([{ 
+        user_id: userId ?? null, 
+        user_message: message, 
+        bot_response: fallbackResponse, 
+        detected_mood: detectedMood 
+      }]);
+    } catch (err) {
+      console.error('Failed to persist fallback chat log:', err);
+    }
+
+    return { botResponse: fallbackResponse, detectedMood, external: external || undefined };own>>;
+
 interface SpotifyPlaylist {
   id: string;
   name: string;
@@ -52,7 +66,7 @@ export async function getSpotifyPlaylists(genre: string) {
   const token = await getSpotifyToken();
   if (!token) return { error: 'Missing Spotify credentials' };
   const q = encodeURIComponent(genre);
-  const res = await fetch(`https://api.spotify.com/v1/search?q=${q}&type=playlist&limit=6`, {
+  const res = await fetch(`https://api.spotify.com/v1/search?q=${q}&type=playlist&limit=8`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   if (!res.ok) return { error: 'Spotify API error' };
@@ -126,7 +140,7 @@ export async function getBotResponse(message: string, chatHistory: Record<string
     return { 
       botResponse: "I'm sorry, I'm having trouble connecting to my AI service right now. Please try again later.", 
       detectedMood, 
-      external: external || undefined
+      external 
     };
   }
 
@@ -154,16 +168,14 @@ Please respond as a caring therapist would, acknowledging their feelings and pro
     const response = await result.response;
     const botResponse = response.text();
 
-    // Persist chat to Supabase chatlog table
+    // Persist chat to Supabase ChatLog table
     try {
-      console.log('Persisting chat to database for user:', userId);
-      await supabase.from('chatlog').insert([{ 
-        user_id: userId || null, 
+      await supabase.from('ChatLog').insert([{ 
+        user_id: userId ?? null, 
         user_message: message, 
         bot_response: botResponse, 
         detected_mood: detectedMood 
       }]);
-      console.log('Successfully persisted chat to database');
     } catch (err) {
       console.error('Failed to persist chat log:', err);
     }
@@ -180,14 +192,12 @@ Please respond as a caring therapist would, acknowledging their feelings and pro
 
     // Still persist the chat even with fallback
     try {
-      console.log('Persisting fallback chat to database for user:', userId);
-      await supabase.from('chatlog').insert([{ 
-        user_id: userId || null, 
+      await supabase.from('ChatLog').insert([{ 
+        user_id: userId ?? null, 
         user_message: message, 
         bot_response: fallbackResponse, 
         detected_mood: detectedMood 
       }]);
-      console.log('Successfully persisted fallback chat to database');
     } catch (err) {
       console.error('Failed to persist fallback chat log:', err);
     }

@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabaseClient';
+import { supabase } from '@/lib/supabaseClient';
 import { User } from '@supabase/supabase-js';
 import { format } from 'date-fns';
 import { PieChart, Pie, Cell, BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
@@ -55,67 +55,66 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState(30);
   const router = useRouter();
-  const supabase = createClient();
 
   useEffect(() => {
+    async function checkUser() {
+      try {
+        const { data: { user }, error } = await supabase.auth.getUser();
+        
+        if (error) {
+          console.error('Error fetching user:', error);
+          router.push('/login');
+          return;
+        }
+
+        if (!user) {
+          router.push('/login');
+          return;
+        }
+
+        setUser(user);
+      } catch (error) {
+        console.error('Unexpected error during user check:', error);
+        router.push('/login');
+      } finally {
+        setLoading(false);
+      }
+    }
+    
     checkUser();
-  }, []);
+  }, [router]);
 
   useEffect(() => {
+    async function fetchChatLogs() {
+      if (!user) return;
+
+      try {
+        const startDate = new Date();
+        startDate.setDate(startDate.getDate() - dateRange);
+
+        const { data, error } = await supabase
+          .from('ChatLog')
+          .select('*')
+          .eq('user_id', user.id)
+          .gte('created_at', startDate.toISOString())
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error('Error fetching chat logs:', error);
+          return;
+        }
+
+        setChatLogs(data || []);
+        setChatSessions(data || []);
+      } catch (error) {
+        console.error('Error in fetchChatLogs:', error);
+      }
+    }
+
     if (user) {
       fetchChatLogs();
     }
   }, [user, dateRange]);
-
-  async function checkUser() {
-    try {
-      const { data: { user }, error } = await supabase.auth.getUser();
-      
-      if (error) {
-        console.error('Error fetching user:', error);
-        router.push('/login');
-        return;
-      }
-
-      if (!user) {
-        router.push('/login');
-        return;
-      }
-
-      setUser(user);
-    } catch (error) {
-      console.error('Unexpected error during user check:', error);
-      router.push('/login');
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function fetchChatLogs() {
-    if (!user) return;
-
-    try {
-      const startDate = new Date();
-      startDate.setDate(startDate.getDate() - dateRange);
-
-      const { data, error } = await supabase
-        .from('chatlog')
-        .select('*')
-        .eq('user_id', user.id)
-        .gte('created_at', startDate.toISOString())
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching chat logs:', error);
-        return;
-      }
-
-      setChatLogs(data || []);
-      setChatSessions(data || []);
-    } catch (error) {
-      console.error('Error in fetchChatLogs:', error);
-    }
-  }
 
   const stats = useCallback((): Stats => {
     if (chatLogs.length === 0) {
@@ -439,7 +438,7 @@ export default function DashboardPage() {
                       cx="50%"
                       cy="50%"
                       labelLine={false}
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
                       outerRadius={80}
                       fill="#8884d8"
                       dataKey="value"
