@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 
 interface NewsArticle {
   title: string;
@@ -12,20 +11,11 @@ interface NewsArticle {
   description: string;
 }
 
-interface Playlist {
-  id: string;
-  name: string;
-  url: string;
-  image?: string;
-}
-
 interface ExternalContent {
-  type: 'spotify_genres' | 'news' | 'playlists';
-  genres?: string[];
+  type: 'news';
   payload?: {
     articles?: NewsArticle[];
   };
-  items?: Playlist[];
 }
 
 interface ChatMessage {
@@ -141,33 +131,6 @@ export default function ChatPage() {
     }
   };
 
-  // Fetch playlists for a selected genre via server action
-  const fetchPlaylistsForGenre = async (genre: string) => {
-    setLoading(true);
-    try {
-      const res = await fetch('/api/spotify', { 
-        method: 'POST', 
-        headers: { 'Content-Type': 'application/json' }, 
-        body: JSON.stringify({ genre }) 
-      });
-      const data = await res.json();
-      setMessages((prev) => [...prev, { 
-        role: 'bot', 
-        content: `Here are ${genre} playlists to match your mood:`, 
-        external: { type: 'playlists', items: data.playlists },
-        timestamp: new Date()
-      }]);
-    } catch {
-      setMessages((prev) => [...prev, { 
-        role: 'bot', 
-        content: 'Unable to fetch playlists right now. Please try again later.',
-        timestamp: new Date()
-      }]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   // Handle Enter key
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && !loading) handleSend();
@@ -265,7 +228,7 @@ export default function ChatPage() {
     "Can you help me relax?",
     "I'm stressed about work",
     "I want to improve my mood",
-    "Show me calming music"
+    "Show me the latest news"
   ];
 
   const handleStarterMessage = (message: string) => {
@@ -344,7 +307,7 @@ export default function ChatPage() {
                 <h2 className="text-2xl font-bold text-gray-800 mb-2">Welcome to Your Safe Space</h2>
                 <p className="text-gray-600 max-w-2xl mx-auto">
                   I&apos;m here to listen, support, and help you navigate your emotions. 
-                  Share what&apos;s on your mind, and I&apos;ll provide personalized guidance, music recommendations, and wellness resources.
+                  Share what&apos;s on your mind, and I&apos;ll provide personalized guidance and wellness resources.
                 </p>
               </div>
 
@@ -412,28 +375,6 @@ export default function ChatPage() {
           {/* External Content Cards */}
           {messages.map((msg, idx) => msg.external ? (
             <div key={`ext-${idx}`} className="mb-6 animate-slide-in">
-              {msg.external.type === 'spotify_genres' && (
-                <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-md">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                    <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l6-6v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm0 0V9c0-1.105 1.343-2 3-2s3 .895 3 2v10c0 1.105-1.343 2-3 2s-3-.895-3-2z" />
-                    </svg>
-                    Choose a Genre
-                  </h3>
-                  <div className="flex gap-3 flex-wrap">
-                    {msg.external.genres?.map((g: string) => (
-                      <button 
-                        key={g} 
-                        onClick={() => fetchPlaylistsForGenre(g)} 
-                        className="px-4 py-2 bg-gradient-to-r from-green-500 to-teal-500 text-white rounded-lg hover:shadow-lg hover:scale-105 transition-all duration-200 font-medium"
-                      >
-                        {g}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
               {msg.external.type === 'news' && (
                 <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-md">
                   <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
@@ -454,47 +395,6 @@ export default function ChatPage() {
                         <h4 className="font-semibold text-gray-800 mb-2 line-clamp-2">{a.title}</h4>
                         <p className="text-sm text-blue-600 mb-2">{a.source}</p>
                         <p className="text-sm text-gray-600 line-clamp-3">{a.description}</p>
-                      </a>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {msg.external.type === 'playlists' && (
-                <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-md">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                    <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                    </svg>
-                    Recommended Playlists
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {msg.external.items?.map((p: Playlist) => (
-                      <a 
-                        key={p.id} 
-                        href={p.url} 
-                        target="_blank" 
-                        rel="noreferrer" 
-                        className="block bg-gray-50 rounded-xl border border-gray-200 overflow-hidden hover:bg-gray-100 hover:shadow-md hover:scale-105 transition-all duration-200"
-                      >
-                        {p.image && (
-                          <div className="relative w-full h-32">
-                            <Image 
-                              src={p.image} 
-                              alt={p.name} 
-                              fill
-                              className="object-cover"
-                              sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                              onError={(e) => {
-                                const target = e.target as HTMLImageElement;
-                                target.style.display = 'none';
-                              }}
-                            />
-                          </div>
-                        )}
-                        <div className="p-4">
-                          <h4 className="font-semibold text-gray-800 line-clamp-2">{p.name}</h4>
-                        </div>
                       </a>
                     ))}
                   </div>
@@ -601,10 +501,10 @@ export default function ChatPage() {
                 💭 Mood Check
               </button>
               <button
-                onClick={() => setInput("I need some calming music")}
+                onClick={() => setInput("Show me the latest news")}
                 className="px-3 py-1.5 bg-green-100 text-green-700 rounded-lg text-sm hover:bg-green-200 transition-colors"
               >
-                🎵 Music Therapy
+                📰 News Updates
               </button>
               <button
                 onClick={() => setInput("Can you give me some positive affirmations?")}

@@ -71,7 +71,7 @@ export default function HomePage() {
           </h1>
           <p className="text-xl md:text-2xl text-gray-600 max-w-4xl mx-auto mb-12 leading-relaxed">
             Experience personalized therapy sessions with our AI-powered mood therapist. 
-            Track your emotions, get music recommendations, stay informed with news, and build 
+            Track your emotions, stay informed with news, and build 
             healthy mental habits—all in one private, supportive environment.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -124,13 +124,13 @@ export default function HomePage() {
             <div className="text-center p-8 bg-gradient-to-br from-purple-50 to-pink-100 rounded-2xl">
               <div className="w-16 h-16 bg-purple-500 rounded-full flex items-center justify-center mx-auto mb-6">
                 <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l6-6v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm0 0V9c0-1.105 1.343-2 3-2s3 .895 3 2v10c0 1.105-1.343 2-3 2s-3-.895-3-2z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
                 </svg>
               </div>
-              <h3 className="text-2xl font-bold text-gray-800 mb-4">Music Therapy</h3>
+              <h3 className="text-2xl font-bold text-gray-800 mb-4">Informative Content</h3>
               <p className="text-gray-600">
-                Get curated Spotify playlists based on your mood. Music therapy has been proven 
-                to reduce stress and improve emotional well-being.
+                Stay updated with curated news and wellness content. Access information 
+                that can help improve your understanding of mental health.
               </p>
             </div>
 
@@ -184,7 +184,7 @@ export default function HomePage() {
                 <span className="text-2xl font-bold text-white">3</span>
               </div>
               <h3 className="text-xl font-bold text-gray-800 mb-4">Get Personalized Support</h3>
-              <p className="text-gray-600">Receive tailored responses, music, and wellness content.</p>
+              <p className="text-gray-600">Receive tailored responses and wellness content.</p>
             </div>
 
             <div className="text-center">
@@ -333,7 +333,6 @@ export default function HomePage() {
               <h4 className="text-lg font-semibold mb-4">Features</h4>
               <ul className="space-y-2 text-gray-400">
                 <li>Mood Analysis</li>
-                <li>Music Therapy</li>
                 <li>News Updates</li>
                 <li>Voice Chat</li>
                 <li>Progress Tracking</li>

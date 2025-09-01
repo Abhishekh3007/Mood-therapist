@@ -2,17 +2,6 @@ import Sentiment from 'sentiment';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { supabase } from '../lib/supabaseClient';
 
-interface SpotifyPlaylist {
-  id: string;
-  name: string;
-  external_urls?: {
-    spotify?: string;
-  };
-  images?: Array<{
-    url: string;
-  }>;
-}
-
 interface NewsArticle {
   title: string;
   url: string;
@@ -24,53 +13,10 @@ interface NewsArticle {
 }
 
 interface ExternalContent {
-  type: 'spotify_genres' | 'news';
-  genres?: string[];
+  type: 'news';
   payload?: {
     articles?: NewsArticle[];
   };
-}
-
-async function getSpotifyToken() {
-  const clientId = process.env.SPOTIFY_CLIENT_ID;
-  const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
-  if (!clientId || !clientSecret) return null;
-  const resp = await fetch('https://accounts.spotify.com/api/token', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      Authorization: 'Basic ' + Buffer.from(`${clientId}:${clientSecret}`).toString('base64'),
-    },
-    body: 'grant_type=client_credentials',
-  });
-  if (!resp.ok) return null;
-  const data = await resp.json();
-  return data.access_token as string;
-}
-
-export async function getSpotifyPlaylists(genre: string) {
-  const token = await getSpotifyToken();
-  if (!token) return { error: 'Missing Spotify credentials' };
-  const q = encodeURIComponent(genre);
-  const res = await fetch(`https://api.spotify.com/v1/search?q=${q}&type=playlist&limit=6`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  if (!res.ok) return { error: 'Spotify API error' };
-  const data = await res.json();
-  
-  // Map to minimal playlist info, filtering out null/invalid items
-  const playlists = (data.playlists?.items ?? [])
-    .filter((p: SpotifyPlaylist | null): p is SpotifyPlaylist => {
-      return p !== null && Boolean(p.id) && Boolean(p.name);
-    })
-    .map((p: SpotifyPlaylist) => ({
-      id: p.id,
-      name: p.name,
-      url: p.external_urls?.spotify,
-      image: p.images?.[0]?.url
-    }));
-  
-  return { playlists };
 }
 
 export async function getTrendingNews() {
@@ -111,10 +57,7 @@ export async function getBotResponse(message: string, chatHistory: Record<string
   // Basic keyword detection for external data
   const lower = message.toLowerCase();
   let external: ExternalContent | null = null;
-  if (lower.includes('music') || lower.includes('song')) {
-    // Offer a few genre suggestions in the response and include external hint
-    external = { type: 'spotify_genres', genres: ['pop', 'chill', 'rock', 'jazz', 'classical'] };
-  } else if (lower.includes('news') || lower.includes('bored')) {
+  if (lower.includes('news') || lower.includes('bored')) {
     const news = await getTrendingNews();
     external = { type: 'news', payload: news };
   }
@@ -175,7 +118,7 @@ Please respond as a caring therapist would, acknowledging their feelings and pro
     
     // Fallback response if Gemini fails
     const fallbackResponse = external 
-      ? `I found some ${external.type === 'news' ? 'top news' : 'music'} options for you based on your message. I'm here to listen and support you.`
+      ? `I found some top news for you based on your message. I'm here to listen and support you.`
       : `I hear that you're feeling ${detectedMood}. Thank you for sharing "${message}" with me. I'm here to listen and help you work through whatever you're experiencing.`;
 
     // Still persist the chat even with fallback
