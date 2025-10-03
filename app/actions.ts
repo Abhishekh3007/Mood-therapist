@@ -94,21 +94,28 @@ User's current message: "${message}"
 Please respond as a caring therapist would, acknowledging their feelings and providing helpful support. Keep your response under 150 words.`;
 
     const result = await model.generateContent(prompt);
-    const response = await result.response;
+    const response = result.response;
     const botResponse = response.text();
 
     // Persist chat to Supabase chatlog table
-    try {
-      console.log('Persisting chat to database for user:', userId);
-      await supabase.from('chatlog').insert([{ 
-        user_id: userId || null, 
-        user_message: message, 
-        bot_response: botResponse, 
-        detected_mood: detectedMood 
-      }]);
-      console.log('Successfully persisted chat to database');
-    } catch (err) {
-      console.error('Failed to persist chat log:', err);
+    if (userId) {
+      try {
+        console.log('Persisting chat to database for user:', userId);
+        const { error: insertError } = await supabase.from('chatlog').insert([{ 
+          user_id: userId, 
+          user_message: message, 
+          bot_response: botResponse, 
+          detected_mood: detectedMood 
+        }]);
+        
+        if (insertError) {
+          console.error('Database insert error:', insertError);
+        } else {
+          console.log('Successfully persisted chat to database');
+        }
+      } catch (err) {
+        console.error('Failed to persist chat log:', err);
+      }
     }
 
     return { botResponse, detectedMood, external: external || undefined };
@@ -122,17 +129,24 @@ Please respond as a caring therapist would, acknowledging their feelings and pro
       : `I hear that you're feeling ${detectedMood}. Thank you for sharing "${message}" with me. I'm here to listen and help you work through whatever you're experiencing.`;
 
     // Still persist the chat even with fallback
-    try {
-      console.log('Persisting fallback chat to database for user:', userId);
-      await supabase.from('chatlog').insert([{ 
-        user_id: userId || null, 
-        user_message: message, 
-        bot_response: fallbackResponse, 
-        detected_mood: detectedMood 
-      }]);
-      console.log('Successfully persisted fallback chat to database');
-    } catch (err) {
-      console.error('Failed to persist fallback chat log:', err);
+    if (userId) {
+      try {
+        console.log('Persisting fallback chat to database for user:', userId);
+        const { error: insertError } = await supabase.from('chatlog').insert([{ 
+          user_id: userId, 
+          user_message: message, 
+          bot_response: fallbackResponse, 
+          detected_mood: detectedMood 
+        }]);
+        
+        if (insertError) {
+          console.error('Database insert error for fallback:', insertError);
+        } else {
+          console.log('Successfully persisted fallback chat to database');
+        }
+      } catch (err) {
+        console.error('Failed to persist fallback chat log:', err);
+      }
     }
 
     return { botResponse: fallbackResponse, detectedMood, external: external || undefined };
