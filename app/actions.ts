@@ -1,5 +1,4 @@
 import Sentiment from 'sentiment';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import { supabase } from '../lib/supabaseClient';
 
 interface NewsArticle {
@@ -74,9 +73,9 @@ export async function getBotResponse(message: string, chatHistory: Record<string
   }
 
   try {
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
+    console.log('🔑 Gemini API Key present:', apiKey ? 'YES (length: ' + apiKey.length + ')' : 'NO');
+    console.log('🔑 API Key starts with:', apiKey.substring(0, 15) + '...');
+    
     // Create a context-aware prompt for the mood therapist
     const prompt = `You are a compassionate and empathetic mood therapist AI assistant. Your role is to:
 1. Listen actively and provide emotional support
@@ -93,9 +92,48 @@ User's current message: "${message}"
 
 Please respond as a caring therapist would, acknowledging their feelings and providing helpful support. Keep your response under 150 words.`;
 
-    const result = await model.generateContent(prompt);
-    const response = result.response;
-    const botResponse = response.text();
+    console.log('📤 Calling Gemini API via REST...');
+    console.log('📝 Prompt length:', prompt.length, 'characters');
+    
+    // Use REST API directly to bypass SDK version issues
+    const apiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+    
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        contents: [{
+          parts: [{
+            text: prompt
+          }]
+        }],
+        generationConfig: {
+          maxOutputTokens: 1000,
+          temperature: 0.7,
+        }
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.text();
+      console.error('❌ Gemini API HTTP error:', response.status, response.statusText);
+      console.error('❌ Error response:', errorData);
+      throw new Error(`Gemini API error: ${response.status} ${response.statusText} - ${errorData}`);
+    }
+
+    const data = await response.json();
+    console.log('📥 Gemini API responded!');
+    
+    if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
+      console.error('❌ Unexpected response structure:', JSON.stringify(data));
+      throw new Error('Invalid response structure from Gemini API');
+    }
+
+    const botResponse = data.candidates[0].content.parts[0].text;
+    console.log('✅ Bot response generated:', botResponse.substring(0, 100) + '...');
+    console.log('📏 Response length:', botResponse.length, 'characters');
 
     // Persist chat to Supabase chatlog table
     if (userId) {
@@ -121,12 +159,17 @@ Please respond as a caring therapist would, acknowledging their feelings and pro
     return { botResponse, detectedMood, external: external || undefined };
 
   } catch (error) {
-    console.error('Gemini AI error:', error);
+    console.error('❌ Gemini AI error occurred!');
+    console.error('Error type:', error instanceof Error ? error.constructor.name : typeof error);
+    console.error('Error message:', error instanceof Error ? error.message : String(error));
+    console.error('Full error object:', JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
     
     // Fallback response if Gemini fails
     const fallbackResponse = external 
       ? `I found some top news for you based on your message. I'm here to listen and support you.`
       : `I hear that you're feeling ${detectedMood}. Thank you for sharing "${message}" with me. I'm here to listen and help you work through whatever you're experiencing.`;
+
+    console.log('⚠️ Using fallback response:', fallbackResponse);
 
     // Still persist the chat even with fallback
     if (userId) {
