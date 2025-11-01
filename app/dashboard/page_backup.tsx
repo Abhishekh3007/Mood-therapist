@@ -199,27 +199,29 @@ export default function DashboardPage() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-sky-100 via-emerald-50 to-teal-50 flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-emerald-100 p-8 text-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
           <div className="mb-6">
-            <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="text-3xl">🔒</span>
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Access Your Dashboard</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h2>
             <p className="text-gray-600 mb-6">
-              Sign in to view your personal wellness analytics and track your journey to inner peace.
+              You need to be signed in to access your dashboard and personal analytics.
             </p>
           </div>
           <div className="space-y-3">
             <Link 
               href="/login"
-              className="block w-full bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-6 py-3 rounded-full hover:shadow-xl hover:scale-105 transition-all font-medium"
+              className="block w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
             >
               Sign In to Your Account
             </Link>
             <Link 
               href="/" 
-              className="block w-full bg-white/80 text-emerald-700 px-6 py-3 rounded-full hover:bg-white hover:shadow-lg transition-all border border-emerald-200"
+              className="block w-full bg-gray-100 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-200 transition-colors"
             >
               Back to Home
             </Link>
@@ -230,16 +232,16 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-sky-100 via-emerald-50 to-teal-50 flex">
-      {/* Sidebar */}
-      <div className="w-80 bg-white/70 backdrop-blur-md text-gray-800 flex flex-col border-r border-emerald-200/50">
+    <div className="min-h-screen bg-gray-50 flex">
+      {/* ChatGPT-style Sidebar */}
+      <div className="w-80 bg-gray-900 text-white flex flex-col">
         {/* Sidebar Header */}
-        <div className="p-4 border-b border-emerald-200/50">
+        <div className="p-4 border-b border-gray-700">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-800">Chat History</h2>
+            <h2 className="text-lg font-semibold">Chat History</h2>
             <Link 
               href="/chat"
-              className="px-3 py-1.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-sm rounded-full hover:shadow-lg hover:scale-105 transition-all"
+              className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
             >
               + New Chat
             </Link>
@@ -249,7 +251,7 @@ export default function DashboardPage() {
         {/* Chat Sessions List */}
         <div className="flex-1 overflow-y-auto p-2 space-y-2">
           {chatSessions.length === 0 ? (
-            <div className="text-center text-gray-500 mt-8 p-4">
+            <div className="text-center text-gray-400 mt-8 p-4">
               <p className="text-sm">No chat history yet</p>
               <p className="text-xs mt-1 opacity-75">Start a conversation to see it here</p>
             </div>
@@ -264,16 +266,16 @@ export default function DashboardPage() {
               return (
                 <div
                   key={session.id}
-                  className="group p-3 rounded-2xl hover:bg-white/40 transition-all cursor-pointer border border-transparent hover:border-emerald-200"
+                  className="group p-3 rounded-lg hover:bg-gray-800 transition-all cursor-pointer border border-transparent hover:border-gray-600"
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-800 truncate">
+                      <p className="text-sm font-medium text-white truncate">
                         {session.user_message?.slice(0, 45)}
                         {session.user_message && session.user_message.length > 45 ? '...' : ''}
                       </p>
                       <div className="flex items-center mt-1 space-x-2">
-                        <span className="text-xs text-gray-500">{timeDisplay}</span>
+                        <span className="text-xs text-gray-400">{timeDisplay}</span>
                         {session.detected_mood && (
                           <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${
                             session.detected_mood === 'positive' 
@@ -407,7 +409,7 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             <div className="bg-white rounded-lg shadow-sm p-6">
               <h3 className="text-sm font-medium text-gray-500 mb-2">Total Conversations</h3>
-              <p className="text-3xl font-bold text-emerald-600">{stats().totalChats}</p>
+              <p className="text-3xl font-bold text-blue-600">{stats().totalChats}</p>
             </div>
             <div className="bg-white rounded-lg shadow-sm p-6">
               <h3 className="text-sm font-medium text-gray-500 mb-2">Active Days</h3>
