@@ -6,6 +6,7 @@ import { supabase } from '../../lib/supabaseClient';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, LineChart, Line, ResponsiveContainer } from 'recharts';
 import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 import Link from 'next/link';
+import SignOutButton from '../../lib/SignOutButton';
 
 interface ChatLog {
   id: number;
@@ -38,6 +39,7 @@ const COLORS = {
 const DashboardPage = () => {
   const { user, loading } = useAuth();
   const [chatLogs, setChatLogs] = useState<ChatLog[]>([]);
+  const [chatSessions, setChatSessions] = useState<ChatLog[]>([]);
   const [moodData, setMoodData] = useState<MoodData[]>([]);
   const [dailyMoodData, setDailyMoodData] = useState<DailyMoodData[]>([]);
   const [stats, setStats] = useState({
@@ -55,7 +57,7 @@ const DashboardPage = () => {
     const endDate = endOfDay(new Date());
 
     const { data, error } = await supabase
-      .from('ChatLog')
+      .from('chatlog')
       .select('*')
       .eq('user_id', user.id)
       .gte('created_at', startDate.toISOString())
@@ -66,10 +68,16 @@ const DashboardPage = () => {
       console.error('Error fetching chat logs:', error);
     } else {
       setChatLogs(data || []);
+      setChatSessions(data || []);
     }
   }, [user, dateRange]);
 
   const processMoodData = useCallback(() => {
+    if (chatLogs.length === 0) {
+      setMoodData([]);
+      return;
+    }
+
     const moodCounts = chatLogs.reduce((acc, log) => {
       const mood = log.detected_mood || 'neutral';
       acc[mood] = (acc[mood] || 0) + 1;
@@ -88,6 +96,8 @@ const DashboardPage = () => {
 
   const processDailyMoodData = useCallback(() => {
     const dailyData: Record<string, { positive: number; neutral: number; negative: number }> = {};
+    const MOOD_KEYS = ['positive', 'neutral', 'negative'] as const;
+    type MoodCategory = (typeof MOOD_KEYS)[number];
 
     // Initialize last 7 days
     for (let i = 6; i >= 0; i--) {
@@ -101,7 +111,8 @@ const DashboardPage = () => {
       const mood = log.detected_mood || 'neutral';
       
       if (dailyData[date]) {
-        dailyData[date][mood as keyof typeof dailyData[string]]++;
+        const moodKey: MoodCategory = MOOD_KEYS.includes(mood as MoodCategory) ? (mood as MoodCategory) : 'neutral';
+        dailyData[date][moodKey]++;
       }
     });
 
@@ -126,9 +137,10 @@ const DashboardPage = () => {
       return acc;
     }, {} as Record<string, number>);
 
-    const mostFrequentMood = Object.entries(moodCounts).reduce((a, b) => 
-      moodCounts[a[0]] > moodCounts[b[0]] ? a : b
-    )?.[0] || 'neutral';
+    const entries = Object.entries(moodCounts);
+    const mostFrequentMood = entries.length > 0
+      ? entries.reduce((a, b) => (a[1] > b[1] ? a : b))[0]
+      : 'neutral';
 
     setStats({
       totalChats,
@@ -145,11 +157,9 @@ const DashboardPage = () => {
   }, [user, dateRange, fetchChatLogs]);
 
   useEffect(() => {
-    if (chatLogs.length > 0) {
-      processMoodData();
-      processDailyMoodData();
-      calculateStats();
-    }
+    processMoodData();
+    processDailyMoodData();
+    calculateStats();
   }, [chatLogs, processMoodData, processDailyMoodData, calculateStats]);
 
   if (loading) {
@@ -238,15 +248,15 @@ const DashboardPage = () => {
                       </p>
                       <div className="flex items-center mt-1 space-x-2">
                         <span className="text-xs text-gray-400">{timeDisplay}</span>
-                        {session.mood && (
+                        {session.detected_mood && (
                           <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${
-                            session.mood === 'positive' 
+                            session.detected_mood === 'positive' 
                               ? 'bg-green-900 text-green-300'
-                              : session.mood === 'negative'
+                              : session.detected_mood === 'negative'
                               ? 'bg-red-900 text-red-300'
                               : 'bg-yellow-900 text-yellow-300'
                           }`}>
-                            {session.mood}
+                            {session.detected_mood}
                           </span>
                         )}
                       </div>
@@ -339,6 +349,7 @@ const DashboardPage = () => {
                 </p>
               </div>
               <div>
+
                 <label className="block text-sm font-medium text-gray-700 mb-1">Last Sign In</label>
                 <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-md">
                   {user.last_sign_in_at ? format(new Date(user.last_sign_in_at), 'MMM dd, yyyy HH:mm') : 'N/A'}
