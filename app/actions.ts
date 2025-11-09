@@ -101,8 +101,14 @@ export async function getBotResponse(message: string, chatHistory: Record<string
 
     console.log('📤 Calling Gemini API via REST...');
     console.log('📝 Prompt length:', prompt.length, 'characters');
+    console.log('🎯 Mode:', mode || 'default');
 
-    const apiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+    // Use gemini-1.5-flash (stable model name)
+    const apiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+
+    // Add timeout to prevent hanging (25 seconds max)
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 25000);
 
     const response = await fetch(apiUrl, {
       method: 'POST',
@@ -117,8 +123,11 @@ export async function getBotResponse(message: string, chatHistory: Record<string
           maxOutputTokens: 1000,
           temperature: 0.7,
         }
-      })
+      }),
+      signal: controller.signal
     });
+
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       const errorData = await response.text();
@@ -168,12 +177,39 @@ export async function getBotResponse(message: string, chatHistory: Record<string
     console.error('Error message:', error instanceof Error ? error.message : String(error));
     console.error('Full error object:', JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
 
-    // Fallback response if Gemini fails
-    const fallbackResponse = external 
-      ? `I found some top news for you based on your message. I'm here to listen and support you.`
-      : `I hear that you're feeling ${detectedMood}. Thank you for sharing "${message}" with me. I'm here to listen and help you work through whatever you're experiencing.`;
+    // Mode-specific fallback responses
+    let fallbackResponse = '';
+    
+    if (mode === 'mood_check') {
+      fallbackResponse = `I'm here to help you check in with your emotions. Let's take a moment together:\n\n💭 How are you feeling right now? What emotions are you experiencing?\n\n🫂 Where do you notice these feelings in your body?\n\n🌟 What might have triggered these feelings today?\n\nTake a deep breath. Remember: acknowledging your feelings is the first step to understanding them better.`;
+    } else if (mode === 'affirmations') {
+      const moodAffirmations = {
+        positive: [
+          '✨ "I am worthy of happiness and joy" - Your positive energy is a gift to yourself and others.',
+          '🌟 "I celebrate my progress, no matter how small" - Every step forward matters.',
+          '💪 "I have the strength to overcome challenges" - You\'ve made it this far, and you can keep going.'
+        ],
+        negative: [
+          '🌱 "This feeling is temporary, and I will get through it" - Difficult emotions pass, and better days are ahead.',
+          '💙 "I am allowed to feel what I feel without judgment" - Your emotions are valid and deserve compassion.',
+          '🌈 "I have survived hard times before, and I will again" - You are resilient and capable.'
+        ],
+        neutral: [
+          '🌸 "I am enough, exactly as I am" - You don\'t need to be perfect to be valuable.',
+          '🎯 "I trust myself to make good decisions" - You have wisdom and insight within you.',
+          '💫 "I am growing and learning every day" - Progress isn\'t always visible, but it\'s happening.'
+        ]
+      };
+      
+      const selectedAffirmations = moodAffirmations[detectedMood as keyof typeof moodAffirmations] || moodAffirmations.neutral;
+      fallbackResponse = `Here are some personalized affirmations for you:\n\n${selectedAffirmations.join('\n\n')}\n\nRepeat these throughout your day. You deserve kindness, especially from yourself. 💚`;
+    } else if (external) {
+      fallbackResponse = `I found some top news for you based on your message. I'm here to listen and support you.`;
+    } else {
+      fallbackResponse = `I hear that you're feeling ${detectedMood}. Thank you for sharing "${message}" with me. I'm here to listen and help you work through whatever you're experiencing.`;
+    }
 
-    console.log('⚠️ Using fallback response:', fallbackResponse);
+    console.log('⚠️ Using fallback response for mode:', mode || 'default');
 
     // Still persist the chat even with fallback
     if (userId) {
