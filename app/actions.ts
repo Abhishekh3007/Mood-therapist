@@ -41,20 +41,30 @@ export async function getTrendingNews() {
 }
 
 // Server-side helper to analyze sentiment and generate a bot response using Gemini AI.
-export async function getBotResponse(message: string, chatHistory: Record<string, unknown>[] = [], userId?: string): Promise<{ 
+export async function getBotResponse(message: string, chatHistory: Record<string, unknown>[] = [], userId?: string, mode?: 'mood_check' | 'affirmations' | string): Promise<{ 
   botResponse: string;
   detectedMood: string;
   external?: ExternalContent;
 }> {
   const analyzer = new Sentiment();
-  const result = analyzer.analyze(message);
+  // analyze recent context for more accurate mood detection
+  const extractContent = (m: unknown) => {
+    if (typeof m === 'object' && m !== null) {
+      const mm = m as Record<string, unknown>;
+      return String(mm.content ?? mm.user_message ?? '');
+    }
+    return '';
+  };
+
+  const recentText = (chatHistory ?? []).slice(-5).map(extractContent).join(' ') + ' ' + (message || '');
+  const result = analyzer.analyze(recentText);
   const score = result.score;
   let detectedMood = 'neutral';
   if (score > 1) detectedMood = 'positive';
   if (score < -1) detectedMood = 'negative';
 
-  // Basic keyword detection for external data
-  const lower = message.toLowerCase();
+  // Basic keyword detection for external data (still check the single message too)
+  const lower = (message || '').toLowerCase();
   let external: ExternalContent | null = null;
   if (lower.includes('news') || lower.includes('bored')) {
     const news = await getTrendingNews();
@@ -75,29 +85,25 @@ export async function getBotResponse(message: string, chatHistory: Record<string
   try {
     console.log('🔑 Gemini API Key present:', apiKey ? 'YES (length: ' + apiKey.length + ')' : 'NO');
     console.log('🔑 API Key starts with:', apiKey.substring(0, 15) + '...');
-    
-    // Create a context-aware prompt for the mood therapist
-    const prompt = `You are a compassionate and empathetic mood therapist AI assistant. Your role is to:
-1. Listen actively and provide emotional support
-2. Offer helpful suggestions for improving mental well-being
-3. Be encouraging and understanding
-4. Keep responses conversational and warm
-5. Suggest coping strategies when appropriate
-6. Never provide medical advice or diagnose conditions
 
-Current user mood detected: ${detectedMood}
-Previous conversation context: ${chatHistory.slice(-3).map((msg: Record<string, unknown>) => `${msg.role || 'user'}: ${msg.content || msg.user_message || msg.bot_response || ''}`).join('\n')}
+    // Build recent conversation context
+    const recentConversation = (chatHistory ?? []).slice(-5).map((msg: Record<string, unknown>) => `${msg.role || 'user'}: ${msg.content || msg.user_message || msg.bot_response || ''}`).join('\n');
 
-User's current message: "${message}"
-
-Please respond as a caring therapist would, acknowledging their feelings and providing helpful support. Keep your response under 150 words.`;
+    // Mode-specific prompt tailoring
+    let prompt = '';
+    if (mode === 'mood_check') {
+      prompt = `You are MoodTherapist, a compassionate AI therapist. The user has requested a mood check-in.\n\nInstructions:\n- Start by acknowledging the user and validating their feelings.\n- Ask 3 gentle, open-ended questions to help identify and name emotions (e.g., What are you feeling right now? Where in your body do you notice it? What might have triggered this feeling?).\n- Offer 2 short, practical coping strategies (breathing, grounding, brief journaling prompt).\n- Keep the tone warm and non-judgmental, concise (100-150 words).\n\nContext:\n- Detected mood: ${detectedMood}\n- Recent conversation:\n${recentConversation}\n\nPlease respond with empathy and the suggested questions and coping steps.`;
+    } else if (mode === 'affirmations') {
+      prompt = `You are MoodTherapist, a compassionate AI therapist. The user requested personalized affirmations.\n\nInstructions:\n- Create 3 to 5 short, specific affirmations tailored to the user's recent concerns and detected mood (${detectedMood}).\n- Each affirmation should be 6-12 words and empowering.\n- After each affirmation, include a one-sentence explanation of why it helps.\n- Keep the overall response encouraging and concise (100-150 words).\n\nContext:\n${recentConversation}\n\nGenerate personalized affirmations with brief explanations.`;
+    } else {
+      prompt = `You are a compassionate and empathetic mood therapist AI assistant named MoodTherapist. Your role is to:\n1. Listen actively and validate emotions without judgment\n2. Provide emotional support tailored to the user's current mood\n3. Offer evidence-based coping strategies and mindfulness techniques\n4. Be warm, encouraging, and use a conversational tone\n5. Help users build emotional resilience and self-awareness\n6. Never provide medical advice, diagnose conditions, or replace professional therapy\n\nSpecial Instructions:\n- Use emojis sparingly (1-2 max)\n- Keep responses concise (100-150 words)\n\nCurrent Context:\n- Detected mood: ${detectedMood}\n- Recent conversation:\n${recentConversation}\n\nUser's message: "${message}"\n\nRespond as a caring therapist would - acknowledge feelings, provide support, and help them move forward.`;
+    }
 
     console.log('📤 Calling Gemini API via REST...');
     console.log('📝 Prompt length:', prompt.length, 'characters');
-    
-    // Use REST API directly to bypass SDK version issues
+
     const apiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
-    
+
     const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
@@ -105,9 +111,7 @@ Please respond as a caring therapist would, acknowledging their feelings and pro
       },
       body: JSON.stringify({
         contents: [{
-          parts: [{
-            text: prompt
-          }]
+          parts: [{ text: prompt }]
         }],
         generationConfig: {
           maxOutputTokens: 1000,
@@ -125,7 +129,7 @@ Please respond as a caring therapist would, acknowledging their feelings and pro
 
     const data = await response.json();
     console.log('📥 Gemini API responded!');
-    
+
     if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
       console.error('❌ Unexpected response structure:', JSON.stringify(data));
       throw new Error('Invalid response structure from Gemini API');
@@ -145,7 +149,7 @@ Please respond as a caring therapist would, acknowledging their feelings and pro
           bot_response: botResponse, 
           detected_mood: detectedMood 
         }]);
-        
+
         if (insertError) {
           console.error('Database insert error:', insertError);
         } else {
@@ -163,7 +167,7 @@ Please respond as a caring therapist would, acknowledging their feelings and pro
     console.error('Error type:', error instanceof Error ? error.constructor.name : typeof error);
     console.error('Error message:', error instanceof Error ? error.message : String(error));
     console.error('Full error object:', JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
-    
+
     // Fallback response if Gemini fails
     const fallbackResponse = external 
       ? `I found some top news for you based on your message. I'm here to listen and support you.`
@@ -181,7 +185,7 @@ Please respond as a caring therapist would, acknowledging their feelings and pro
           bot_response: fallbackResponse, 
           detected_mood: detectedMood 
         }]);
-        
+
         if (insertError) {
           console.error('Database insert error for fallback:', insertError);
         } else {

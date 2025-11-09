@@ -131,6 +131,60 @@ export default function ChatPage() {
     }
   };
 
+  // Send a special mode-based request (mood check or affirmations)
+  const handleSendMode = async (mode: 'mood_check' | 'affirmations') => {
+    // Get the current session
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError || !session) {
+      console.error('No valid session found:', sessionError);
+      router.push('/login');
+      return;
+    }
+
+    // Add a visible user message to the chat to indicate the action
+    const actionLabel = mode === 'mood_check' ? "Mood check-in" : "Requesting affirmations";
+    const userMsg = {
+      role: 'user' as const,
+      content: actionLabel,
+      timestamp: new Date(),
+    };
+    setMessages((prev) => [...prev, userMsg]);
+    setLoading(true);
+
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({ message: '', chatHistory: messages, mode }),
+      });
+
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+
+      const data = await res.json();
+      const botMsg: ChatMessage = {
+        role: 'bot',
+        content: data.botResponse,
+        timestamp: new Date(),
+      };
+      if (data.external) botMsg.external = data.external;
+      setMessages((prev) => [...prev, botMsg]);
+    } catch (error) {
+      console.error('Chat API error:', error);
+      setMessages((prev) => [...prev, {
+        role: 'bot',
+        content: 'Sorry, something went wrong. Please try again.',
+        timestamp: new Date()
+      }]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Handle Enter key
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && !loading) handleSend();
@@ -223,12 +277,12 @@ export default function ChatPage() {
 
   // Suggested starter messages
   const starterMessages = [
-    "I'm feeling anxious today",
-    "I need some motivation",
-    "Can you help me relax?",
-    "I'm stressed about work",
-    "I want to improve my mood",
-    "Show me the latest news"
+    "I'm feeling anxious and overwhelmed today",
+    "I need motivation and encouragement to get through the day",
+    "Can you help me relax and find inner peace?",
+    "I'm stressed about work and need coping strategies",
+    "I want to check in with my emotions and improve my mood",
+    "Show me the latest news to distract my mind"
   ];
 
   const handleStarterMessage = (message: string) => {
@@ -495,10 +549,10 @@ export default function ChatPage() {
           {!loading && input.length === 0 && messages.length > 0 && (
             <div className="mt-3 flex gap-2 flex-wrap">
               <button
-                onClick={() => setInput("How are you feeling today?")}
+                onClick={() => handleSendMode('mood_check')}
                 className="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg text-sm hover:bg-blue-200 transition-colors"
               >
-                💭 Mood Check
+                💭 Mood Check-in
               </button>
               <button
                 onClick={() => setInput("Show me the latest news")}
@@ -507,10 +561,10 @@ export default function ChatPage() {
                 📰 News Updates
               </button>
               <button
-                onClick={() => setInput("Can you give me some positive affirmations?")}
+                onClick={() => handleSendMode('affirmations')}
                 className="px-3 py-1.5 bg-purple-100 text-purple-700 rounded-lg text-sm hover:bg-purple-200 transition-colors"
               >
-                ✨ Affirmations
+                ✨ Daily Affirmations
               </button>
             </div>
           )}
