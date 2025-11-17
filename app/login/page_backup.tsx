@@ -254,14 +254,14 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sky-100 via-emerald-50 to-teal-50 flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex flex-col">
       {/* Navigation */}
       <nav className="flex items-center justify-between px-6 py-4 bg-white/80 backdrop-blur-md shadow-sm">
         <Link href="/" className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-r from-emerald-400 to-teal-500 rounded-lg flex items-center justify-center">
+          <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
             <span className="text-white font-bold text-lg">M</span>
           </div>
-          <span className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
+          <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
             MoodTherapist
           </span>
         </Link>
@@ -278,7 +278,7 @@ export default function LoginPage() {
         <div className="w-full max-w-md">
           {/* Header */}
           <div className="text-center mb-8">
-            <div className="inline-flex items-center px-4 py-2 bg-emerald-100 text-emerald-700 rounded-full text-sm font-semibold mb-6">
+            <div className="inline-flex items-center px-4 py-2 bg-blue-100 text-blue-700 rounded-full text-sm font-semibold mb-6">
               🔐 Secure Login
             </div>
             <h1 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">
@@ -309,7 +309,7 @@ export default function LoginPage() {
                       input: 'w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200',
                       button: 'w-full py-3 px-4 rounded-lg font-semibold transition-all duration-200 focus:ring-2 focus:ring-offset-2',
                       message: 'text-sm text-red-600 mt-2',
-                      anchor: 'text-emerald-600 hover:text-blue-800 font-medium transition-colors',
+                      anchor: 'text-blue-600 hover:text-blue-800 font-medium transition-colors',
                       divider: 'my-6',
                     }
                   }}
@@ -327,7 +327,7 @@ export default function LoginPage() {
                     </p>
                     <Link
                       href="/chat"
-                      className="inline-flex items-center text-emerald-600 hover:text-blue-800 font-semibold transition-colors"
+                      className="inline-flex items-center text-blue-600 hover:text-blue-800 font-semibold transition-colors"
                     >
                       Start chatting now
                       <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -343,16 +343,16 @@ export default function LoginPage() {
           {/* Features */}
           <div className="mt-8 grid grid-cols-3 gap-4 text-center">
             <div className="p-4 bg-white/60 backdrop-blur-sm rounded-xl">
-              <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
               </div>
               <p className="text-xs font-medium text-gray-700">100% Private</p>
             </div>
             <div className="p-4 bg-white/60 backdrop-blur-sm rounded-xl">
-              <div className="w-8 h-8 bg-teal-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                <svg className="w-4 h-4 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
               </div>
@@ -369,9 +369,9 @@ export default function LoginPage() {
           </div>
 
           {/* Support Notice */}
-          <div className="mt-8 p-4 bg-emerald-50 border border-emerald-200 rounded-xl">
+          <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-xl">
             <div className="flex items-start gap-3">
-              <div className="w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+              <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
                 <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
@@ -385,7 +385,6 @@ export default function LoginPage() {
             </div>
           </div>
 
-<<<<<<< Updated upstream
           {/* Debug Panel - Development Only */}
           {isDev && (
             <div className="mt-8 p-4 bg-gray-100 rounded-xl border border-gray-200">
@@ -421,7 +420,7 @@ export default function LoginPage() {
                   <div className="flex gap-2">
                     <button 
                       onClick={doCheckSession} 
-                      className="px-3 py-1.5 bg-emerald-500 text-white rounded-md hover:bg-emerald-600 transition-colors text-xs font-medium"
+                      className="px-3 py-1.5 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors text-xs font-medium"
                     >
                       Check Session
                     </button>
@@ -458,8 +457,6 @@ export default function LoginPage() {
               </details>
             </div>
           )}
-=======
->>>>>>> Stashed changes
         </div>
       </div>
 

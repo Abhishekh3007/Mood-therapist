@@ -4,8 +4,9 @@ import { createClient } from '@supabase/supabase-js';
 
 export async function POST(req: Request) {
   try {
-    const { message, chatHistory } = await req.json();
-    if (!message) return NextResponse.json({ error: 'Missing message' }, { status: 400 });
+    const { message, chatHistory, mode } = await req.json();
+    // message can be empty when mode is provided (mode-based requests)
+    if (!message && !mode) return NextResponse.json({ error: 'Missing message' }, { status: 400 });
     
     // Get the authorization header
     const authHeader = req.headers.get('authorization');
@@ -35,7 +36,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     
-    const result = await getBotResponse(message, chatHistory ?? [], user.id);
+  const result = await getBotResponse(message ?? '', chatHistory ?? [], user.id, mode ?? undefined);
     return NextResponse.json(result);
   } catch (err) {
     console.error('API error', err);
