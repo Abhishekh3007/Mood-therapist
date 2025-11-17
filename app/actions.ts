@@ -59,9 +59,25 @@ export async function getBotResponse(message: string, chatHistory: Record<string
   const recentText = (chatHistory ?? []).slice(-5).map(extractContent).join(' ') + ' ' + (message || '');
   const result = analyzer.analyze(recentText);
   const score = result.score;
+  
+  // Enhanced mood detection with keyword analysis
+  const lowerMessage = message.toLowerCase();
+  const negativeKeywords = ['alone', 'lonely', 'sad', 'depressed', 'anxious', 'worried', 'scared', 'afraid', 'hurt', 'pain', 'cry', 'upset', 'angry', 'frustrated', 'hopeless', 'worthless', 'tired', 'exhausted', 'stressed', 'overwhelmed', 'lost', 'empty', 'broken', 'miserable', 'terrible', 'awful', 'bad', 'no one', 'nobody'];
+  const positiveKeywords = ['happy', 'joy', 'excited', 'great', 'wonderful', 'amazing', 'fantastic', 'excellent', 'good', 'better', 'grateful', 'thankful', 'blessed', 'love', 'peace', 'calm', 'relaxed', 'confident', 'proud', 'hopeful', 'optimistic'];
+  
   let detectedMood = 'neutral';
-  if (score > 0.5) detectedMood = 'positive';
-  if (score < -0.5) detectedMood = 'negative';
+  const hasNegativeKeyword = negativeKeywords.some(keyword => lowerMessage.includes(keyword));
+  const hasPositiveKeyword = positiveKeywords.some(keyword => lowerMessage.includes(keyword));
+  
+  if (hasNegativeKeyword && !hasPositiveKeyword) {
+    detectedMood = 'negative';
+  } else if (hasPositiveKeyword && !hasNegativeKeyword) {
+    detectedMood = 'positive';
+  } else if (score > 1) {
+    detectedMood = 'positive';
+  } else if (score < -1) {
+    detectedMood = 'negative';
+  }
 
   // Basic keyword detection for external data (still check the single message too)
   const lower = (message || '').toLowerCase();
@@ -85,6 +101,22 @@ export async function getBotResponse(message: string, chatHistory: Record<string
   try {
     console.log('🔑 Gemini API Key present:', apiKey ? 'YES (length: ' + apiKey.length + ')' : 'NO');
     console.log('🔑 API Key starts with:', apiKey.substring(0, 15) + '...');
+
+    console.log('🎭 Detected mood:', detectedMood);
+    console.log('💬 User message:', message);
+    
+    // Create a context-aware prompt for the mood therapist
+    const prompt = `You are a compassionate and empathetic mood therapist AI assistant. Your role is to:
+1. Listen actively and provide emotional support
+2. Offer helpful suggestions for improving mental well-being
+3. Be encouraging and understanding
+4. Keep responses conversational and warm
+5. Suggest coping strategies when appropriate
+6. Never provide medical advice or diagnose conditions
+
+Current user mood detected: ${detectedMood}
+Previous conversation context: ${chatHistory.slice(-3).map((msg: Record<string, unknown>) => `${msg.role || 'user'}: ${msg.content || msg.user_message || msg.bot_response || ''}`).join('\n')}
+
 
     // Build recent conversation context
     const recentConversation = (chatHistory ?? []).slice(-5).map((msg: Record<string, unknown>) => `${msg.role || 'user'}: ${msg.content || msg.user_message || msg.bot_response || ''}`).join('\n');
@@ -180,33 +212,31 @@ export async function getBotResponse(message: string, chatHistory: Record<string
     // Mode-specific fallback responses
     let fallbackResponse = '';
     
-    if (mode === 'mood_check') {
-      fallbackResponse = `I'm here to help you check in with your emotions. Let's take a moment together:\n\n💭 How are you feeling right now? What emotions are you experiencing?\n\n🫂 Where do you notice these feelings in your body?\n\n🌟 What might have triggered these feelings today?\n\nTake a deep breath. Remember: acknowledging your feelings is the first step to understanding them better.`;
-    } else if (mode === 'affirmations') {
-      const moodAffirmations = {
-        positive: [
-          '✨ "I am worthy of happiness and joy" - Your positive energy is a gift to yourself and others.',
-          '🌟 "I celebrate my progress, no matter how small" - Every step forward matters.',
-          '💪 "I have the strength to overcome challenges" - You\'ve made it this far, and you can keep going.'
-        ],
-        negative: [
-          '🌱 "This feeling is temporary, and I will get through it" - Difficult emotions pass, and better days are ahead.',
-          '💙 "I am allowed to feel what I feel without judgment" - Your emotions are valid and deserve compassion.',
-          '🌈 "I have survived hard times before, and I will again" - You are resilient and capable.'
-        ],
-        neutral: [
-          '🌸 "I am enough, exactly as I am" - You don\'t need to be perfect to be valuable.',
-          '🎯 "I trust myself to make good decisions" - You have wisdom and insight within you.',
-          '💫 "I am growing and learning every day" - Progress isn\'t always visible, but it\'s happening.'
-        ]
-      };
-      
-      const selectedAffirmations = moodAffirmations[detectedMood as keyof typeof moodAffirmations] || moodAffirmations.neutral;
-      fallbackResponse = `Here are some personalized affirmations for you:\n\n${selectedAffirmations.join('\n\n')}\n\nRepeat these throughout your day. You deserve kindness, especially from yourself. 💚`;
-    } else if (external) {
+    // Enhanced fallback responses based on mood
+    let fallbackResponse;
+    if (external) {
       fallbackResponse = `I found some top news for you based on your message. I'm here to listen and support you.`;
+    } else if (detectedMood === 'negative') {
+      const negativeResponses = [
+        `I'm truly sorry you're going through this. ${message.includes('alone') || message.includes('lonely') ? 'Feeling alone can be incredibly difficult, but please know you're not truly alone - I'm here for you.' : 'What you're feeling is valid, and it takes courage to share it.'} Would you like to talk more about what's troubling you?`,
+        `Thank you for trusting me with your feelings. It sounds like you're dealing with something really challenging right now. I want you to know that your feelings are completely valid, and I'm here to support you through this. What's weighing most heavily on your mind?`,
+        `I hear the pain in your words, and I want you to know that I'm here to listen without judgment. ${message.includes('alone') || message.includes('lonely') ? 'Loneliness is a deeply human experience, and you're brave for acknowledging it.' : 'What you're experiencing matters, and you deserve support.'} How can I help you feel a little better today?`
+      ];
+      fallbackResponse = negativeResponses[Math.floor(Math.random() * negativeResponses.length)];
+    } else if (detectedMood === 'positive') {
+      const positiveResponses = [
+        `That's wonderful to hear! Your positive energy is truly uplifting. What's bringing you joy today?`,
+        `I'm so glad you're feeling good! It's great to share in your happiness. Tell me more about what's going well!`,
+        `That's fantastic! Your positivity is contagious. What made today special for you?`
+      ];
+      fallbackResponse = positiveResponses[Math.floor(Math.random() * positiveResponses.length)];
     } else {
-      fallbackResponse = `I hear that you're feeling ${detectedMood}. Thank you for sharing "${message}" with me. I'm here to listen and help you work through whatever you're experiencing.`;
+      const neutralResponses = [
+        `I appreciate you sharing that with me. Tell me more about what's on your mind - I'm here to listen and support you.`,
+        `Thank you for opening up. I'd love to understand better what you're experiencing. What else would you like to talk about?`,
+        `I'm here to support you. Would you like to explore those feelings further, or is there something specific I can help you with?`
+      ];
+      fallbackResponse = neutralResponses[Math.floor(Math.random() * neutralResponses.length)];
     }
 
     console.log('⚠️ Using fallback response for mode:', mode || 'default');
