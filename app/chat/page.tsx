@@ -104,7 +104,10 @@ export default function ChatPage() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session.access_token}`
         },
-        body: JSON.stringify({ message: input, chatHistory: messages }),
+        body: JSON.stringify({ 
+          message: input, 
+          chatHistory: messages.slice(0, -1) // Exclude the current user message
+        }),
       });
       
       if (!res.ok) {

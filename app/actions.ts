@@ -60,8 +60,8 @@ export async function getBotResponse(message: string, chatHistory: Record<string
   const result = analyzer.analyze(recentText);
   const score = result.score;
   let detectedMood = 'neutral';
-  if (score > 1) detectedMood = 'positive';
-  if (score < -1) detectedMood = 'negative';
+  if (score > 0.5) detectedMood = 'positive';
+  if (score < -0.5) detectedMood = 'negative';
 
   // Basic keyword detection for external data (still check the single message too)
   const lower = (message || '').toLowerCase();
@@ -121,7 +121,7 @@ export async function getBotResponse(message: string, chatHistory: Record<string
         }],
         generationConfig: {
           maxOutputTokens: 1000,
-          temperature: 0.7,
+          temperature: 0.9,
         }
       }),
       signal: controller.signal
