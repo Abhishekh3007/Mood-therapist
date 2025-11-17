@@ -385,6 +385,7 @@ export default function LoginPage() {
             </div>
           </div>
 
+<<<<<<< Updated upstream
           {/* Debug Panel - Development Only */}
           {isDev && (
             <div className="mt-8 p-4 bg-gray-100 rounded-xl border border-gray-200">
@@ -457,6 +458,8 @@ export default function LoginPage() {
               </details>
             </div>
           )}
+=======
+>>>>>>> Stashed changes
         </div>
       </div>
 
