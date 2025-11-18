@@ -167,12 +167,18 @@ export async function getBotResponse(message: string, chatHistory: Record<string
           finalResponse = `${ack}\n\nQuestions:\n${questions}\n\nCoping strategies:\n${coping}\n\n${summary}`;
         }
       } else if (mode === 'affirmations') {
-        const parsed = JSON.parse(botResponse);
+        const parsed = JSON.parse(botResponse) as unknown;
         if (Array.isArray(parsed)) {
-          finalResponse = parsed.map((it: any, idx: number) => `${idx + 1}. ${it.affirmation} — ${it.explanation}`).join('\n\n');
+          const items = parsed as Array<unknown>;
+          finalResponse = items.map((it: unknown, idx: number) => {
+            const obj = it as Record<string, unknown>;
+            const affirmation = typeof obj.affirmation === 'string' ? obj.affirmation : '';
+            const explanation = typeof obj.explanation === 'string' ? obj.explanation : '';
+            return `${idx + 1}. ${affirmation} — ${explanation}`;
+          }).join('\n\n');
         }
       }
-    } catch (e) {
+    } catch {
       console.warn('Could not parse structured response; using raw text.');
     }
 
