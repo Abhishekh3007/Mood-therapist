@@ -1,6 +1,7 @@
-// Quick test to verify Gemini API is working
-const { GoogleGenerativeAI } = require('@google/generative-ai');
-require('dotenv').config({ path: '.env.local' });
+// Quick test to verify Gemini API is working (ESM)
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import dotenv from 'dotenv';
+dotenv.config({ path: '.env.local' });
 
 async function testGemini() {
   const apiKey = process.env.GEMINI_API_KEY;
@@ -17,7 +18,7 @@ async function testGemini() {
 
   try {
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
     const prompt = "You are a caring therapist. A user says: 'I need some motivation'. Please respond with encouragement in 2-3 sentences.";
 
@@ -36,9 +37,7 @@ async function testGemini() {
     
   } catch (error) {
     console.error('❌ ERROR calling Gemini API:');
-    console.error('Error type:', error.constructor.name);
-    console.error('Error message:', error.message);
-    console.error('Full error:', error);
+    console.error(error);
   }
 }
 

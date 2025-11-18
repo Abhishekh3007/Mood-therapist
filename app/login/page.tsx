@@ -10,9 +10,6 @@ import Link from 'next/link';
 export default function LoginPage() {
   const [origin, setOrigin] = useState<string | null>(null);
   const router = useRouter();
-  const [lastAuthEvent, setLastAuthEvent] = useState<string | null>(null);
-  const [lastAuthSession, setLastAuthSession] = useState<unknown>(null);
-  const [checkResult, setCheckResult] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -98,8 +95,6 @@ export default function LoginPage() {
 
     const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
       console.debug('Supabase auth event:', event, session);
-      setLastAuthEvent(event ?? null);
-      setLastAuthSession(session ?? null);
       if (event === 'SIGNED_IN' && session) {
         router.replace('/chat');
       }
@@ -134,66 +129,9 @@ export default function LoginPage() {
 
   const redirectTo = origin ? `${origin.replace(/\/$/, '')}/login` : undefined;
 
-  const isDev = process.env.NODE_ENV !== 'production';
-
-  const doCheckSession = async () => {
-    try {
-      const s = await supabase.auth.getSession();
-      const u = await supabase.auth.getUser?.();
-      setCheckResult(JSON.stringify({ session: s?.data?.session ?? null, user: u ?? null }, null, 2));
-      console.debug('manual checkSession', s, u);
-    } catch (e) {
-      setCheckResult(String(e));
-    }
-  };
-
-  const manualFinalize = async () => {
-    try {
-      if (typeof window === 'undefined') return;
-      const hash = window.location.hash.replace(/^#/, '?');
-      const params = new URLSearchParams(hash);
-      const access_token = params.get('access_token');
-      const refresh_token = params.get('refresh_token');
-      if (access_token) {
-        if (typeof (supabase.auth as unknown as Record<string, unknown>)['setSession'] === 'function') {
-          // @ts-expect-error runtime
-          await supabase.auth.setSession({ access_token, refresh_token });
-          console.debug('manual setSession succeeded');
-          setCheckResult('manual setSession succeeded');
-          history.replaceState(null, '', window.location.pathname + window.location.search);
-          router.replace('/chat');
-          return;
-        }
-        if (typeof (supabase.auth as unknown as Record<string, unknown>)['getSessionFromUrl'] === 'function') {
-          const fn = (supabase.auth as unknown as Record<string, unknown>)['getSessionFromUrl'] as () => Promise<unknown>;
-          await fn();
-          console.debug('manual getSessionFromUrl succeeded');
-          setCheckResult('manual getSessionFromUrl succeeded');
-          history.replaceState(null, '', window.location.pathname + window.location.search);
-          router.replace('/chat');
-          return;
-        }
-        setCheckResult('no runtime finalize method available');
-      } else {
-        setCheckResult('no access_token in URL hash');
-      }
-    } catch (e) {
-      setCheckResult(String(e));
-    }
-  };
-
-  const clearSession = async () => {
-    try {
-      await supabase.auth.signOut();
-      setCheckResult('Session cleared');
-      setLastAuthEvent('SIGNED_OUT');
-      setLastAuthSession(null);
-      // Refresh the page to show the login form
-      window.location.reload();
-    } catch (e) {
-      setCheckResult('Error clearing session: ' + String(e));
-    }
-  };
+  // Development-only helpers and debug state were removed to avoid
+  // unused-variable lint warnings; auth flow and session handling
+  // remain unchanged (router redirect on SIGNED_IN).
 
   const customTheme = {
     default: {

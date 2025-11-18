@@ -3,6 +3,11 @@
 :root {
   --background: #ffffff;
   --foreground: #0f172a;
+  /* Mobile-first touch sizing and safe-area insets */
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --touch-size: 48px;
+  --bottom-nav-height: calc(64px + var(--safe-bottom));
+  --gutter: 16px;
   --primary: #6366f1;
   --primary-dark: #4f46e5;
   --secondary: #ec4899;
@@ -39,6 +44,18 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Mobile-first layout helpers */
+.app-container {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: calc(var(--gutter) * 1) var(--gutter) calc(var(--bottom-nav-height) + var(--gutter));
+}
+
+/* Make sure body accounts for bottom nav on mobile */
+body {
+  padding-bottom: var(--bottom-nav-height);
 }
 
 /* Custom Scrollbar */
@@ -230,6 +247,46 @@ body {
   font-weight: 600;
   transition: all 0.3s ease;
   box-shadow: 0 4px 14px 0 rgba(99, 102, 241, 0.39);
+}
+
+/* Bottom Navigation (one-thumb friendly) */
+.bottom-nav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: var(--bottom-nav-height);
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 8px calc(var(--gutter));
+  background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.85));
+  border-top: 1px solid rgba(15,23,42,0.06);
+  backdrop-filter: blur(6px) saturate(140%);
+  -webkit-backdrop-filter: blur(6px) saturate(140%);
+  z-index: 60;
+}
+
+.bottom-nav .nav-btn {
+  width: var(--touch-size);
+  height: var(--touch-size);
+  min-width: var(--touch-size);
+  min-height: var(--touch-size);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  color: var(--foreground);
+}
+
+.bottom-nav .nav-btn:active {
+  transform: scale(0.98);
+}
+
+/* Increase hit area for clickable lists and cards */
+.touch-target {
+  padding: 12px;
+  touch-action: manipulation;
 }
 
 .btn-primary:hover {

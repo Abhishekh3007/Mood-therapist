@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
 import "./globals.css";
+import BottomNav from "./components/BottomNav";
 
 const inter = Inter({
   variable: "--font-geist-sans",
@@ -58,7 +59,10 @@ export default function RootLayout({
             <div className="absolute bottom-0 left-1/2 w-96 h-96 bg-pink-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-float" style={{ animationDelay: '4s' }}></div>
           </div>
           
-          {children}
+          <main className="app-container">{children}</main>
+
+          {/* Bottom navigation (mobile-first, one-thumb) */}
+          <BottomNav />
         </div>
       </body>
     </html>

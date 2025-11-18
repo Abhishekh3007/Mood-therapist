@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import IconButton from "../components/IconButton";
+import TextInput from "../components/TextInput";
 import { supabase } from "../../lib/supabaseClient";
 import { useRouter } from "next/navigation";
 
@@ -309,7 +311,7 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-gradient-to-br from-sky-100 via-emerald-50 to-teal-50">
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-sky-100 via-emerald-50 to-teal-50">
       {/* Header */}
       <div className="bg-white/80 backdrop-blur-md shadow-sm border-b border-white/20">
         <div className="flex justify-between items-center p-4 max-w-4xl mx-auto">
@@ -350,7 +352,7 @@ export default function ChatPage() {
       </div>
 
       {/* Chat Messages Area */}
-      <div className="flex-1 overflow-y-auto px-4 py-6">
+      <div className="flex-1 overflow-y-auto px-4 py-6 pb-32">
         <div className="max-w-4xl mx-auto">
           {/* Welcome Section */}
           {showWelcome && (
@@ -487,41 +489,46 @@ export default function ChatPage() {
         </div>
       </div>
 
-      {/* Input Area */}
-      <div className="bg-white/80 backdrop-blur-md border-t border-white/20 p-4">
-        <div className="max-w-4xl mx-auto">
-          <div className="flex gap-3 items-end">
-            {/* Voice Input Button */}
-            <button
-              onClick={handleSpeak}
-              disabled={loading}
-              className={`p-3 rounded-xl transition-all duration-200 ${
-                isRecording 
-                  ? "bg-red-500 text-white animate-pulse" 
-                  : "bg-green-500 hover:bg-green-600 text-white hover:shadow-lg disabled:opacity-50"
-              }`}
-              title={isRecording ? "Recording..." : "Voice Input"}
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-              </svg>
-            </button>
+      {/* Input Area - fixed and above bottom nav */}
+      <div
+        className="fixed left-0 right-0 z-50"
+        style={{ bottom: 'var(--bottom-nav-height)', backdropFilter: 'blur(8px)' }}
+      >
+        <div className="max-w-4xl mx-auto px-4 py-3">
+          <div className="flex items-center gap-3">
+            {/* Voice Input FAB */}
+            <div className="flex-shrink-0">
+              <IconButton
+                onClick={handleSpeak}
+                ariaLabel={isRecording ? 'Recording' : 'Voice input'}
+                disabled={loading}
+                variant={isRecording ? 'solid' : 'ghost'}
+                className={`w-14 h-14 ${isRecording ? 'bg-red-500 text-white animate-pulse' : ''}`}
+                icon={
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                  </svg>
+                }
+              />
+            </div>
 
             {/* Text Input */}
             <div className="flex-1 relative">
-              <input
-                type="text"
-                className="w-full px-4 py-3 pr-12 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 placeholder-gray-400 text-gray-900 shadow-sm"
+              {/* Use shared TextInput component for consistent styling and accessibility */}
+              <TextInput
                 placeholder="Share what's on your mind..."
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
                 disabled={loading}
+                ariaLabel="Chat message"
+                className=""
               />
               {input && (
                 <button
                   onClick={() => setInput("")}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  className="absolute right-16 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  aria-label="Clear input"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -530,45 +537,52 @@ export default function ChatPage() {
               )}
             </div>
 
-            {/* Send Button */}
-            <button
-              onClick={handleSend}
-              disabled={loading || !input.trim()}
-              className="px-6 py-3 bg-gradient-to-r from-emerald-400 to-teal-500 text-white rounded-xl hover:shadow-lg hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:transform-none font-medium"
-            >
-              {loading ? (
-                <svg className="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-              ) : (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                </svg>
-              )}
-            </button>
+            {/* Prominent Send Button */}
+            <div className="flex-shrink-0">
+              <IconButton
+                onClick={handleSend}
+                ariaLabel="Send message"
+                disabled={loading || !input.trim()}
+                variant="solid"
+                className="w-14 h-14"
+                icon={
+                  loading ? (
+                    <svg className="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                  ) : (
+                    <svg className="w-6 h-6 rotate-45" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2z" />
+                    </svg>
+                  )
+                }
+              />
+            </div>
           </div>
 
-          {/* Quick Actions */}
+          {/* Quick Actions - horizontal, scrollable on small screens */}
           {!loading && input.length === 0 && messages.length > 0 && (
-            <div className="mt-3 flex gap-2 flex-wrap">
-              <button
-                onClick={() => handleSendMode('mood_check')}
-                className="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg text-sm hover:bg-blue-200 transition-colors"
-              >
-                💭 Mood Check-in
-              </button>
-              <button
-                onClick={() => setInput("Show me the latest news")}
-                className="px-3 py-1.5 bg-green-100 text-green-700 rounded-lg text-sm hover:bg-green-200 transition-colors"
-              >
-                📰 News Updates
-              </button>
-              <button
-                onClick={() => handleSendMode('affirmations')}
-                className="px-3 py-1.5 bg-purple-100 text-purple-700 rounded-lg text-sm hover:bg-purple-200 transition-colors"
-              >
-                ✨ Daily Affirmations
-              </button>
+            <div className="mt-3 overflow-x-auto py-2">
+              <div className="flex gap-2 w-max">
+                <button
+                  onClick={() => handleSendMode('mood_check')}
+                  className="px-3 py-2 bg-blue-100 text-blue-700 rounded-lg text-sm hover:bg-blue-200 transition-colors"
+                >
+                  💭 Mood Check-in
+                </button>
+                <button
+                  onClick={() => setInput('Show me the latest news')}
+                  className="px-3 py-2 bg-green-100 text-green-700 rounded-lg text-sm hover:bg-green-200 transition-colors"
+                >
+                  📰 News Updates
+                </button>
+                <button
+                  onClick={() => handleSendMode('affirmations')}
+                  className="px-3 py-2 bg-purple-100 text-purple-700 rounded-lg text-sm hover:bg-purple-200 transition-colors"
+                >
+                  ✨ Daily Affirmations
+                </button>
+              </div>
             </div>
           )}
         </div>

@@ -25,46 +25,54 @@ export default function HomePage() {
         {/* Sky gradient */}
         <div className="absolute inset-0 bg-gradient-to-b from-sky-200/30 via-emerald-100/20 to-transparent"></div>
         
-        {/* Floating clouds */}
-        <div className="absolute top-10 left-10 w-64 h-24 bg-white/40 rounded-full blur-2xl animate-float"></div>
-        <div className="absolute top-32 right-20 w-80 h-32 bg-white/30 rounded-full blur-3xl animate-float" style={{ animationDelay: '2s' }}></div>
-        <div className="absolute top-48 left-1/3 w-72 h-28 bg-white/35 rounded-full blur-2xl animate-float" style={{ animationDelay: '4s' }}></div>
+        {/* Floating clouds (hidden on small screens) */}
+        <div className="hidden sm:block absolute top-10 left-10 w-64 h-24 bg-white/40 rounded-full blur-2xl animate-float"></div>
+        <div className="hidden sm:block absolute top-32 right-20 w-80 h-32 bg-white/30 rounded-full blur-3xl animate-float" style={{ animationDelay: '2s' }}></div>
+        <div className="hidden sm:block absolute top-48 left-1/3 w-72 h-28 bg-white/35 rounded-full blur-2xl animate-float" style={{ animationDelay: '4s' }}></div>
         
         {/* Subtle nature elements */}
         <div className="absolute bottom-0 left-0 w-full h-64 bg-gradient-to-t from-emerald-200/30 via-green-100/20 to-transparent"></div>
         
-        {/* Soft light rays */}
-        <div className="absolute top-0 right-1/4 w-1 h-96 bg-gradient-to-b from-yellow-200/20 to-transparent blur-xl rotate-12 animate-pulse-slow"></div>
-        <div className="absolute top-0 right-1/3 w-1 h-80 bg-gradient-to-b from-yellow-100/15 to-transparent blur-xl rotate-6 animate-pulse-slow" style={{ animationDelay: '1s' }}></div>
+        {/* Soft light rays (hidden on small screens) */}
+        <div className="hidden sm:block absolute top-0 right-1/4 w-1 h-96 bg-gradient-to-b from-yellow-200/20 to-transparent blur-xl rotate-12 animate-pulse-slow"></div>
+        <div className="hidden sm:block absolute top-0 right-1/3 w-1 h-80 bg-gradient-to-b from-yellow-100/15 to-transparent blur-xl rotate-6 animate-pulse-slow" style={{ animationDelay: '1s' }}></div>
       </div>
 
       {/* Navigation */}
       <nav className={`fixed top-0 w-full z-50 transition-all duration-500 ${
         isScrolled ? 'backdrop-blur-md bg-white/70 shadow-lg shadow-emerald-500/5' : 'bg-transparent'
       }`}>
-        <div className="max-w-7xl mx-auto px-6 py-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3">
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center shadow-lg">
-                <span className="text-white text-xl">🌿</span>
+              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center shadow-md">
+                <span className="text-white text-lg">🌿</span>
               </div>
-              <span className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
+              <span className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
                 MoodTherapist
               </span>
             </div>
-            
-            <div className="flex items-center gap-6">
+
+            {/* Desktop actions */}
+            <div className="hidden md:flex items-center gap-4">
               <Link 
                 href="/login" 
-                className="px-6 py-2.5 rounded-full bg-white/80 text-emerald-700 font-medium hover:bg-white hover:shadow-lg transition-all duration-300 border border-emerald-200"
+                className="px-4 py-2 rounded-full bg-white/80 text-emerald-700 font-medium hover:bg-white hover:shadow transition-all duration-200 border border-emerald-200"
               >
                 Sign In
               </Link>
               <Link 
                 href="/chat" 
-                className="px-6 py-2.5 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-medium hover:shadow-xl hover:scale-105 transition-all duration-300"
+                className="px-4 py-2 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-medium hover:shadow-xl hover:scale-105 transition-all duration-200"
               >
                 Start Journey
+              </Link>
+            </div>
+
+            {/* Mobile CTA */}
+            <div className="md:hidden">
+              <Link href="/chat" className="px-3 py-2 rounded-full bg-emerald-500 text-white text-sm font-semibold shadow-md">
+                Start
               </Link>
             </div>
           </div>
@@ -72,11 +80,11 @@ export default function HomePage() {
       </nav>
 
       {/* Hero Section */}
-      <section className="pt-32 pb-20 px-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
+      <section className="pt-20 pb-8 px-4 sm:px-6">
+        <div className="max-w-4xl sm:max-w-6xl mx-auto">
+          <div className="grid lg:grid-cols-2 gap-8 items-center">
             {/* Left: Content */}
-            <div className="space-y-8 animate-fade-in">
+            <div className="space-y-6 animate-fade-in text-center lg:text-left">
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-100/80 backdrop-blur-sm border border-emerald-200">
                 <span className="relative flex h-3 w-3">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -85,66 +93,66 @@ export default function HomePage() {
                 <span className="text-sm font-medium text-emerald-800">Your peaceful space, always here</span>
               </div>
               
-              <h1 className="text-6xl lg:text-7xl font-bold leading-tight">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold leading-tight">
                 <span className="block text-gray-800 font-serif">Find Your</span>
                 <span className="block bg-gradient-to-r from-emerald-600 via-teal-500 to-cyan-500 bg-clip-text text-transparent animate-gradient">
                   Inner Peace
                 </span>
               </h1>
               
-              <p className="text-xl text-gray-600 leading-relaxed max-w-xl">
+              <p className="text-sm sm:text-base md:text-lg text-gray-600 leading-relaxed max-w-md sm:max-w-xl mx-auto lg:mx-0">
                 Take a mindful breath. Connect with an AI companion that understands. 
                 Discover calm, clarity, and emotional wellness in a safe, serene space designed just for you.
               </p>
               
-              <div className="flex flex-col sm:flex-row gap-4 pt-4">
+              <div className="flex flex-col gap-3 pt-4">
                 <Link 
                   href="/chat"
-                  className="group px-8 py-4 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-semibold text-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2"
+                  className="group w-full sm:w-auto px-6 py-3 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-semibold text-base sm:text-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2"
                 >
                   Begin Your Journey
                   <span className="group-hover:translate-x-1 transition-transform">🌱</span>
                 </Link>
                 <Link 
                   href="/dashboard"
-                  className="px-8 py-4 rounded-full bg-white/80 backdrop-blur-sm text-emerald-700 font-semibold text-lg hover:bg-white hover:shadow-xl transition-all duration-300 border border-emerald-200 flex items-center justify-center"
+                  className="w-full px-6 py-3 rounded-full bg-white/80 backdrop-blur-sm text-emerald-700 font-semibold text-base sm:text-lg hover:bg-white hover:shadow-xl transition-all duration-300 border border-emerald-200 flex items-center justify-center"
                 >
                   Explore Features
                 </Link>
               </div>
               
               {/* Trust indicators */}
-              <div className="flex items-center gap-8 pt-8">
+              <div className="flex flex-col sm:flex-row items-center gap-6 pt-6 text-center sm:text-left">
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-emerald-600">24/7</div>
-                  <div className="text-sm text-gray-600">Always Available</div>
+                  <div className="text-2xl sm:text-3xl font-bold text-emerald-600">24/7</div>
+                  <div className="text-xs sm:text-sm text-gray-600">Always Available</div>
                 </div>
-                <div className="w-px h-12 bg-emerald-200"></div>
+                <div className="w-px h-6 hidden sm:block bg-emerald-200"></div>
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-emerald-600">100%</div>
-                  <div className="text-sm text-gray-600">Private & Secure</div>
+                  <div className="text-2xl sm:text-3xl font-bold text-emerald-600">100%</div>
+                  <div className="text-xs sm:text-sm text-gray-600">Private & Secure</div>
                 </div>
-                <div className="w-px h-12 bg-emerald-200"></div>
+                <div className="w-px h-6 hidden sm:block bg-emerald-200"></div>
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-emerald-600">AI</div>
-                  <div className="text-sm text-gray-600">Powered Support</div>
+                  <div className="text-2xl sm:text-3xl font-bold text-emerald-600">AI</div>
+                  <div className="text-xs sm:text-sm text-gray-600">Powered Support</div>
                 </div>
               </div>
             </div>
             
             {/* Right: Visual Element */}
             <div className="relative animate-slide-in-right">
-              <div className="relative w-full h-[500px]">
+              <div className="relative w-full h-40 sm:h-56 md:h-72 lg:h-[500px]">
                 {/* Meditation figure illustration */}
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="relative">
                     {/* Glowing aura */}
                     <div className="absolute inset-0 bg-gradient-to-r from-emerald-300/30 to-teal-300/30 rounded-full blur-3xl animate-pulse-slow"></div>
-                    
+
                     {/* Main visual */}
-                    <div className="relative backdrop-blur-sm bg-white/40 rounded-3xl p-12 shadow-2xl border border-white/50">
-                      <div className="text-center space-y-6">
-                        <div className="text-8xl animate-float">🧘‍♀️</div>
+                    <div className="relative backdrop-blur-sm bg-white/40 rounded-3xl p-6 sm:p-10 shadow-2xl border border-white/50">
+                      <div className="text-center space-y-4">
+                        <div className="text-4xl sm:text-6xl lg:text-8xl animate-float">🧘‍♀️</div>
                         <div className="space-y-2">
                           <div className="flex items-center justify-center gap-2 text-emerald-600">
                             <span className="text-2xl">🌸</span>
@@ -152,16 +160,16 @@ export default function HomePage() {
                             <span className="text-2xl">🌿</span>
                             <span className="text-2xl">🦋</span>
                           </div>
-                          <p className="text-gray-600 italic">&quot;Breathe in peace, breathe out stress&quot;</p>
+                          <p className="text-gray-600 italic text-sm">&quot;Breathe in peace, breathe out stress&quot;</p>
                         </div>
                       </div>
                     </div>
-                    
-                    {/* Floating elements */}
-                    <div className="absolute -top-6 -right-6 text-4xl animate-float" style={{ animationDelay: '0.5s' }}>🌸</div>
-                    <div className="absolute -bottom-6 -left-6 text-4xl animate-float" style={{ animationDelay: '1s' }}>🍃</div>
-                    <div className="absolute top-1/2 -right-12 text-3xl animate-float" style={{ animationDelay: '1.5s' }}>🦋</div>
-                    <div className="absolute top-1/4 -left-8 text-3xl animate-float" style={{ animationDelay: '2s' }}>☘️</div>
+
+                    {/* Floating elements (hidden on small screens) */}
+                    <div className="hidden sm:block absolute -top-6 -right-6 text-4xl animate-float" style={{ animationDelay: '0.5s' }}>🌸</div>
+                    <div className="hidden sm:block absolute -bottom-6 -left-6 text-4xl animate-float" style={{ animationDelay: '1s' }}>🍃</div>
+                    <div className="hidden sm:block absolute top-1/2 -right-12 text-3xl animate-float" style={{ animationDelay: '1.5s' }}>🦋</div>
+                    <div className="hidden sm:block absolute top-1/4 -left-8 text-3xl animate-float" style={{ animationDelay: '2s' }}>☘️</div>
                   </div>
                 </div>
               </div>

@@ -1,0 +1,2 @@
+# Ignore archived backup files created by the CLI assistant
+app/archive/

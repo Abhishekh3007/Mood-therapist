@@ -8,6 +8,7 @@ import { User } from '@supabase/supabase-js';
 import { format } from 'date-fns';
 import { PieChart, Pie, Cell, BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import SignOutButton from '@/lib/SignOutButton';
+import PrimaryButton from '../components/PrimaryButton';
 
 interface ChatLog {
   id: string;
@@ -211,17 +212,13 @@ export default function DashboardPage() {
             </p>
           </div>
           <div className="space-y-3">
-            <Link 
-              href="/login"
-              className="block w-full bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-6 py-3 rounded-full hover:shadow-xl hover:scale-105 transition-all font-medium"
-            >
-              Sign In to Your Account
+            <Link href="/login">
+              <PrimaryButton ariaLabel="Sign in to account">Sign In to Your Account</PrimaryButton>
             </Link>
-            <Link 
-              href="/" 
-              className="block w-full bg-white/80 text-emerald-700 px-6 py-3 rounded-full hover:bg-white hover:shadow-lg transition-all border border-emerald-200"
-            >
-              Back to Home
+            <Link href="/">
+              <div className="w-full">
+                <PrimaryButton ariaLabel="Back to home" className="bg-white text-emerald-700 border border-emerald-200">Back to Home</PrimaryButton>
+              </div>
             </Link>
           </div>
         </div>
@@ -230,9 +227,9 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-sky-100 via-emerald-50 to-teal-50 flex">
-      {/* Sidebar */}
-      <div className="w-80 bg-white/70 backdrop-blur-md text-gray-800 flex flex-col border-r border-emerald-200/50">
+    <div className="min-h-screen bg-gradient-to-b from-sky-100 via-emerald-50 to-teal-50 flex flex-col md:flex-row">
+      {/* Sidebar (hidden on small screens) */}
+      <aside className="hidden md:flex md:w-80 bg-white/70 backdrop-blur-md text-gray-800 flex-col border-r border-emerald-200/50">
         {/* Sidebar Header */}
         <div className="p-4 border-b border-emerald-200/50">
           <div className="flex items-center justify-between">
@@ -331,10 +328,22 @@ export default function DashboardPage() {
             <SignOutButton />
           </div>
         </div>
-      </div>
+      </aside>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col">
+      <main className="flex-1 flex flex-col">
+        {/* Small-screen summary */}
+        <div className="md:hidden p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-xl font-bold text-gray-900">Dashboard</h1>
+              <p className="text-sm text-gray-600">Welcome back, {user?.email}</p>
+            </div>
+            <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
+              <span className="text-white text-sm font-medium">{user?.email?.charAt(0).toUpperCase()}</span>
+            </div>
+          </div>
+        </div>
         {/* Header */}
         <div className="bg-white shadow-sm border-b">
           <div className="px-6 py-4">
@@ -519,7 +528,7 @@ export default function DashboardPage() {
             )}
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
