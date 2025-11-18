@@ -104,9 +104,11 @@ export async function getBotResponse(message: string, chatHistory: Record<string
 
   let prompt = '';
   if (mode === 'mood_check') {
-    prompt = `You are MoodTherapist, a compassionate AI therapist. The user has requested a mood check-in.\n\nInstructions:\n- Start by acknowledging the user and validating their feelings.\n- Ask 3 gentle, open-ended questions to help identify and name emotions.\n- Offer 2 short, practical coping strategies (breathing, grounding, brief journaling prompt).\n- Keep the tone warm and non-judgmental, concise (100-150 words).\n\nContext:\n- Detected mood: ${detectedMood}\n- Recent conversation:\n${recentConversation}\n\nPlease respond with empathy and the suggested questions and coping steps.`;
+    // Request structured JSON so the response is dynamic and machine-parseable
+    prompt = `You are MoodTherapist, a compassionate AI therapist. The user has requested a mood check-in.\n\nInstructions (RESPONSE FORMAT MUST BE VALID JSON OBJECT):\nReturn a JSON object with the following keys:\n- "acknowledgement": a 1-2 sentence empathetic acknowledgement of the user's feelings\n- "questions": an array of 3 gentle, open-ended questions to help the user identify and name emotions\n- "coping": an array of 2 short, practical coping strategies (one-liners)\n- "summary": a one-sentence encouraging next step\n\nContext:\n- Detected mood: ${detectedMood}\n- Recent conversation:\n${recentConversation}\n- User message:\n${message}\n\nDo NOT include any extra commentary outside the JSON object. Ensure the JSON is valid and parsable.`;
   } else if (mode === 'affirmations') {
-    prompt = `You are MoodTherapist, a compassionate AI therapist. The user requested personalized affirmations.\n\nInstructions:\n- Create 3 to 5 short, specific affirmations tailored to the user's recent concerns and detected mood (${detectedMood}).\n- Each affirmation should be 6-12 words and empowering.\n- After each affirmation, include a one-sentence explanation of why it helps.\n- Keep the overall response encouraging and concise (100-150 words).\n\nContext:\n${recentConversation}\n\nGenerate personalized affirmations with brief explanations.`;
+    // Request structured JSON array for affirmations to ensure tailored, non-stub output
+    prompt = `You are MoodTherapist, a compassionate AI therapist. The user requested personalized affirmations.\n\nInstructions (RESPONSE FORMAT MUST BE A VALID JSON ARRAY):\nReturn a JSON array of objects where each object contains:\n- "affirmation": a 6-12 word affirmation tailored to the user's recent concerns\n- "explanation": a one-sentence explanation of why the affirmation helps\nReturn 3 to 5 items.\n\nContext:\n- Detected mood: ${detectedMood}\n- Recent conversation:\n${recentConversation}\n- User message:\n${message}\n\nDo NOT include any narrative outside the JSON array. Ensure the JSON is valid and parsable.`;
   } else {
     prompt = `You are a compassionate and empathetic mood therapist AI assistant named MoodTherapist. Your role is to:\n1. Listen actively and validate emotions without judgment\n2. Provide emotional support tailored to the user's current mood\n3. Offer evidence-based coping strategies and mindfulness techniques\n4. Be warm, encouraging, and use a conversational tone\n5. Help users build emotional resilience and self-awareness\n6. Never provide medical advice, diagnose conditions, or replace professional therapy\n\nSpecial Instructions:\n- Use emojis sparingly (1-2 max)\n- Keep responses concise (100-150 words)\n\nCurrent Context:\n- Detected mood: ${detectedMood}\n- Recent conversation:\n${recentConversation}\n\nUser's message: "${message}"\n\nRespond as a caring therapist would - acknowledge feelings, provide support, and help them move forward.`;
   }
@@ -150,15 +152,37 @@ export async function getBotResponse(message: string, chatHistory: Record<string
     }
 
     const botResponse = data.candidates[0].content.parts[0].text;
-    console.log('✅ Bot response generated:', botResponse.substring(0, 100) + '...');
+    console.log('✅ Bot response generated (raw):', botResponse.substring(0, 100) + '...');
 
-    // Persist chat to Supabase chatlog table
+    // If we requested structured output for certain modes, attempt to parse and format it
+    let finalResponse = botResponse;
+    try {
+      if (mode === 'mood_check') {
+        const parsed = JSON.parse(botResponse);
+        if (parsed && typeof parsed === 'object') {
+          const ack = parsed.acknowledgement || '';
+          const questions = Array.isArray(parsed.questions) ? parsed.questions.map((q: string, i: number) => `${i + 1}. ${q}`).join('\n') : '';
+          const coping = Array.isArray(parsed.coping) ? parsed.coping.map((c: string, i: number) => `${i + 1}. ${c}`).join('\n') : '';
+          const summary = parsed.summary || '';
+          finalResponse = `${ack}\n\nQuestions:\n${questions}\n\nCoping strategies:\n${coping}\n\n${summary}`;
+        }
+      } else if (mode === 'affirmations') {
+        const parsed = JSON.parse(botResponse);
+        if (Array.isArray(parsed)) {
+          finalResponse = parsed.map((it: any, idx: number) => `${idx + 1}. ${it.affirmation} — ${it.explanation}`).join('\n\n');
+        }
+      }
+    } catch (e) {
+      console.warn('Could not parse structured response; using raw text.');
+    }
+
+    // Persist chat to Supabase chatlog table (store the rendered final response)
     if (userId) {
       try {
         const { error: insertError } = await supabase.from('chatlog').insert([{ 
           user_id: userId, 
           user_message: message, 
-          bot_response: botResponse, 
+          bot_response: finalResponse, 
           detected_mood: detectedMood 
         }]);
         if (insertError) console.error('Database insert error:', insertError);
@@ -167,7 +191,7 @@ export async function getBotResponse(message: string, chatHistory: Record<string
       }
     }
 
-    return { botResponse, detectedMood, external: external || undefined };
+    return { botResponse: finalResponse, detectedMood, external: external || undefined };
 
   } catch (error) {
     console.error('❌ Gemini AI error occurred!');
