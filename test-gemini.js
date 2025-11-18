@@ -1,6 +1,8 @@
 // Quick test to verify Gemini API is working
-const { GoogleGenerativeAI } = require('@google/generative-ai');
-require('dotenv').config({ path: '.env.local' });
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import dotenv from 'dotenv';
+
+dotenv.config({ path: '.env.local' });
 
 async function testGemini() {
   const apiKey = process.env.GEMINI_API_KEY;

@@ -15,6 +15,7 @@ interface ExternalContent {
   type: 'news';
   payload?: {
     articles?: NewsArticle[];
+    error?: string;
   };
 }
 
@@ -145,7 +146,7 @@ export default function ChatPage() {
     }
 
     // Add a visible user message to the chat to indicate the action
-    const actionLabel = mode === 'mood_check' ? "Mood check-in" : "Requesting affirmations";
+    const actionLabel = mode === 'mood_check' ? "💭 Requesting a mood check-in" : "✨ Requesting personalized affirmations";
     const userMsg = {
       role: 'user' as const,
       content: actionLabel,
@@ -155,13 +156,14 @@ export default function ChatPage() {
     setLoading(true);
 
     try {
+      // Send the action label as the message so AI has context, along with the mode
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session.access_token}`
         },
-        body: JSON.stringify({ message: '', chatHistory: messages, mode }),
+        body: JSON.stringify({ message: actionLabel, chatHistory: messages, mode }),
       });
 
       if (!res.ok) {
@@ -440,21 +442,25 @@ export default function ChatPage() {
                     </svg>
                     Latest News
                   </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {msg.external.payload?.articles?.map((a: NewsArticle, i: number) => (
-                      <a 
-                        key={i} 
-                        href={a.url} 
-                        target="_blank" 
-                        rel="noreferrer" 
-                        className="block p-4 bg-gray-50 rounded-xl border border-gray-200 hover:bg-gray-100 hover:shadow-md transition-all duration-200"
-                      >
-                        <h4 className="font-semibold text-gray-800 mb-2 line-clamp-2">{a.title}</h4>
-                        <p className="text-sm text-blue-600 mb-2">{a.source}</p>
-                        <p className="text-sm text-gray-600 line-clamp-3">{a.description}</p>
-                      </a>
-                    ))}
-                  </div>
+                  {msg.external.payload?.error ? (
+                    <p className="text-gray-600">{msg.external.payload.error}</p>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {msg.external.payload?.articles?.map((a: NewsArticle, i: number) => (
+                        <a 
+                          key={i} 
+                          href={a.url} 
+                          target="_blank" 
+                          rel="noreferrer" 
+                          className="block p-4 bg-gray-50 rounded-xl border border-gray-200 hover:bg-gray-100 hover:shadow-md transition-all duration-200"
+                        >
+                          <h4 className="font-semibold text-gray-800 mb-2 line-clamp-2">{a.title}</h4>
+                          <p className="text-sm text-blue-600 mb-2">{a.source}</p>
+                          <p className="text-sm text-gray-600 line-clamp-3">{a.description}</p>
+                        </a>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
